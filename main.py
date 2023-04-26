@@ -12,7 +12,6 @@ def center_rect(rect, pos):
 class App:
     def __init__(self) -> None:
         pyxel.init(*SCREEN_SIZE)
-        self.x = 0
         pyxel.run(self.update, self.draw)
 
 
