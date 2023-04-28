@@ -1,7 +1,12 @@
 import pyxel
 
-SCREEN_SIZE = 160, 120
+SCREEN_SIZE = 360, 240
 MID = SCREEN_SIZE[0] / 2, SCREEN_SIZE[1] / 2
+
+# sprites
+#   image, u, v, w, h, colkey
+FISH1 = 0, 0, 32, 24, 16, 0
+FISH2 = 0, 0, 48, 24, 16, 0
 
 
 def rndxy():
@@ -14,6 +19,8 @@ class App:
         pyxel.load("assets/fishing2.pyxres")
         pyxel.playm(0, loop=True)
         self.bfish = 0, MID[1]
+        self.bfish2 = 0, MID[1] + 10
+        self.fishs = [(*rndxy(), FISH1) for _ in range(10)]
         self.bg = [rndxy() for _ in range(15)]
         pyxel.run(self.update, self.draw)
 
@@ -30,13 +37,21 @@ class App:
         fish = (0, 0, 32, 24, 16, 0)
 
         self.draw_bg()
+        self.fishes()
 
         pyxel.line(*line_start, *line_end, 9)
         pyxel.blt(MID[0] - 7, MID[1], *hook)
-        pyxel.blt(*self.bfish, *fish)
-        self.bfish = self.bfish[0] + 1, MID[1]
-        if self.bfish[0] > SCREEN_SIZE[0] + 8:
-            self.bfish = 0-24, MID[1]
+    
+
+    def fishes(self):
+        for i, (x, y, sprite) in enumerate(self.fishs):
+            pyxel.blt(x, y, *sprite)
+
+            if x - 24 > SCREEN_SIZE[0]:
+                self.fishs[i] = 0 - 24, pyxel.rndi(0, SCREEN_SIZE[1]), sprite
+                # pyxel.play(0, 0)
+            else:
+                self.fishs[i] = x + 1, y, sprite
 
     def draw_bg(self):
         pyxel.cls(1)
