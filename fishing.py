@@ -11,9 +11,9 @@ def rndxy():
 class App:
     def __init__(self) -> None:
         pyxel.init(*SCREEN_SIZE)
-        pyxel.load("assets/fishing.pyxres")
+        pyxel.load("assets/fishing2.pyxres")
         pyxel.playm(0, loop=True)
-        self.bg_pos = 100, 0
+        self.bfish = 0, MID[1]
         self.bg = [rndxy() for _ in range(15)]
         pyxel.run(self.update, self.draw)
 
@@ -25,30 +25,34 @@ class App:
         line_start = MID[0], 0
         line_end = MID
 
-        hook = (0, 0, 0, 8, 8, 0)
+        # image, u, v, w, h, colkey
+        hook = (0, 0, 8, 8, 8, 0)
+        fish = (0, 0, 32, 24, 16, 0)
 
         self.draw_bg()
 
         pyxel.line(*line_start, *line_end, 9)
         pyxel.blt(MID[0] - 7, MID[1], *hook)
+        pyxel.blt(*self.bfish, *fish)
+        self.bfish = self.bfish[0] + 1, MID[1]
+        if self.bfish[0] > SCREEN_SIZE[0] + 8:
+            self.bfish = 0-24, MID[1]
 
     def draw_bg(self):
         pyxel.cls(1)
-        sprite_change_frame = 18
+        sprite_change_frame = 16
         offset = pyxel.frame_count % sprite_change_frame
         halfframe = sprite_change_frame / 2
 
         new_bg = self.bg.copy()
         for i, fish_pos in enumerate(self.bg):
-            spr = fish_pos[0] % 3 * 8
-            fish2 = (0, 24, spr, 8, 8, 0)
+            spr = fish_pos[0] % 4 * 8
+            fish2 = (0, spr, 0, 8, 8, 0)
             pyxel.blt(*fish_pos, *fish2)
             if offset == halfframe:
-                new_fish = fish_pos[0] - 1, fish_pos[1]
-
-                if new_fish[0] < -8:
-                    new_fish = SCREEN_SIZE[0], new_fish[1]
-
+                new_fish = fish_pos[0] + 1, fish_pos[1]
+                if new_fish[0] > SCREEN_SIZE[0] + 8: 
+                    new_fish = 0, new_fish[1]
                 new_bg[i] = new_fish
 
         self.bg = new_bg
