@@ -1,3 +1,7 @@
+from dataclasses import dataclass
+from typing import Sequence, Tuple
+
+import esper
 import pyxel
 
 SCREEN_SIZE = 360, 240
@@ -7,10 +11,56 @@ MID = SCREEN_SIZE[0] / 2, SCREEN_SIZE[1] / 2
 #   image, u, v, w, h, colkey
 FISH1 = 0, 0, 32, 24, 16, 0
 FISH2 = 0, 0, 48, 24, 16, 0
+HOOK = (0, 0, 8, 8, 8, 0)
+
+#   image, u, v, w, h, colkey
+IMAGE = Tuple[int, int, int, int, int, int]
 
 
 def rndxy():
     return pyxel.rndi(0, SCREEN_SIZE[0]), pyxel.rndi(0, SCREEN_SIZE[1])
+
+
+@dataclass
+class AnimatedSpriteComponent:
+    x: int
+    y: int
+    images: Sequence[IMAGE]
+
+
+@dataclass
+class VelocityComponent:
+    x: int = 1
+    y: int = 0
+
+
+class MovementSystem(esper.Processor):
+    def __init__(self) -> None:
+        super().__init__()
+
+    def process(self):
+        for ent, (render, velocity) in self.world.get_components(AnimatedSpriteComponent, VelocityComponent):
+            render = render
+            render.x += velocity.x
+            render.y += velocity.y
+
+            sprite = render.images[pyxel.frame_count % len(render.images)]
+            if render.x - sprite[3] > SCREEN_SIZE[0]:
+                render.x = 0 - sprite[3]
+                render.y = pyxel.rndi(0, SCREEN_SIZE[1])
+                velocity.x = pyxel.rndi(1, 3)
+
+
+class AnimatedSpriteSystem(esper.Processor):
+    def __init__(self) -> None:
+        super().__init__()
+
+    def process(self):
+        for ent, (render) in self.world.get_components(AnimatedSpriteComponent):
+            render = render[0]
+
+            sprite = render.images[pyxel.frame_count % len(render.images)]
+            pyxel.blt(render.x, render.y, *sprite)
 
 
 class App:
@@ -18,59 +68,45 @@ class App:
         pyxel.init(*SCREEN_SIZE)
         pyxel.load("assets/fishing2.pyxres")
         pyxel.playm(0, loop=True)
-        self.bfish = 0, MID[1]
-        self.bfish2 = 0, MID[1] + 10
-        self.fishs = [(*rndxy(), FISH1) for _ in range(10)]
-        self.bg = [rndxy() for _ in range(15)]
+
+        self.world = esper.World()
+        self.world.add_processor(AnimatedSpriteSystem())
+        self.world.add_processor(MovementSystem())
+        self.spawn_entities()
+
         pyxel.run(self.update, self.draw)
+    
+    def spawn_entities(self):
+        for _ in range(20):
+            self.world.create_entity(
+                AnimatedSpriteComponent(
+                    *rndxy(),
+                    [(0, i * 8, 0, 8, 8, 0) for i in range(4)]
+                ),
+                VelocityComponent(x=pyxel.rndi(1, 3))
+            )
+
+        for _ in range(10):
+            self.world.create_entity(
+                AnimatedSpriteComponent(
+                    *rndxy(),
+                    [FISH1]
+                ),
+                VelocityComponent(x=pyxel.rndi(1, 4))
+            )
+
 
     def update(self):
         if pyxel.btnp(pyxel.KEY_Q):
             pyxel.quit()
 
     def draw(self):
-        line_start = MID[0], 0
-        line_end = MID
-
-        # image, u, v, w, h, colkey
-        hook = (0, 0, 8, 8, 8, 0)
-        fish = (0, 0, 32, 24, 16, 0)
-
-        self.draw_bg()
-        self.fishes()
-
-        pyxel.line(*line_start, *line_end, 9)
-        pyxel.blt(MID[0] - 7, MID[1], *hook)
-    
-
-    def fishes(self):
-        for i, (x, y, sprite) in enumerate(self.fishs):
-            pyxel.blt(x, y, *sprite)
-
-            if x - 24 > SCREEN_SIZE[0]:
-                self.fishs[i] = 0 - 24, pyxel.rndi(0, SCREEN_SIZE[1]), sprite
-                # pyxel.play(0, 0)
-            else:
-                self.fishs[i] = x + 1, y, sprite
-
-    def draw_bg(self):
         pyxel.cls(1)
-        sprite_change_frame = 16
-        offset = pyxel.frame_count % sprite_change_frame
-        halfframe = sprite_change_frame / 2
 
-        new_bg = self.bg.copy()
-        for i, fish_pos in enumerate(self.bg):
-            spr = fish_pos[0] % 4 * 8
-            fish2 = (0, spr, 0, 8, 8, 0)
-            pyxel.blt(*fish_pos, *fish2)
-            if offset == halfframe:
-                new_fish = fish_pos[0] + 1, fish_pos[1]
-                if new_fish[0] > SCREEN_SIZE[0] + 8: 
-                    new_fish = 0, new_fish[1]
-                new_bg[i] = new_fish
-
-        self.bg = new_bg
+        line_start = MID[0], 0
+        pyxel.line(*line_start, *MID, 9)
+        pyxel.blt(MID[0] - 7, MID[1], *HOOK)
+        self.world.process()
 
 
 App()
