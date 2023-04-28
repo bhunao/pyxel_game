@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 from typing import Sequence, Tuple
+from uuid import uuid1
+from client import Client
 
 import esper
 import pyxel
@@ -33,6 +35,10 @@ class VelocityComponent:
     x: int = 1
     y: int = 0
 
+@dataclass
+class PlayerComponent:
+    pass
+
 
 class MovementSystem(esper.Processor):
     def __init__(self) -> None:
@@ -62,6 +68,47 @@ class AnimatedSpriteSystem(esper.Processor):
             sprite = render.images[pyxel.frame_count % len(render.images)]
             pyxel.blt(render.x, render.y, *sprite)
 
+class ConnectionSystem(esper.Processor):
+    def __init__(self) -> None:
+        pass
+
+    def process(self):
+        for ent, (client, player) in self.world.get_components(Client, PlayerComponent):
+            if pyxel.frame_count % 2 == 0:
+                pass
+
+class KeyboardInputProcessor(esper.Processor):
+    def __init__(self) -> None:
+        super().__init__()
+    
+    def send_player_pos(self, client, render):
+        client.send(str(render.__dict__))
+
+
+    def process(self):
+        if pyxel.btnp(pyxel.KEY_Q):
+            pyxel.quit()
+        
+        for ent, (render, client, player) in self.world.get_components(AnimatedSpriteComponent, Client, PlayerComponent):
+            if pyxel.btn(pyxel.KEY_LEFT):
+                client.send("left")
+                self.send_player_pos(client, render)
+                render.x -= 1
+            if pyxel.btn(pyxel.KEY_RIGHT):
+                client.send("right")
+                self.send_player_pos(client, render)
+                render.x += 1
+            if pyxel.btn(pyxel.KEY_UP):
+                client.send("up")
+                self.send_player_pos(client, render)
+                render.y -= 1
+            if pyxel.btn(pyxel.KEY_DOWN):
+                client.send("down")
+                self.send_player_pos(client, render)
+                render.y += 1
+            if pyxel.btn(pyxel.KEY_SPACE):
+                client.send("space")
+                client.send(str(render))
 
 class App:
     def __init__(self) -> None:
@@ -72,7 +119,21 @@ class App:
         self.world = esper.World()
         self.world.add_processor(AnimatedSpriteSystem())
         self.world.add_processor(MovementSystem())
+        self.world.add_processor(ConnectionSystem())
+        self.world.add_processor(KeyboardInputProcessor())
         self.spawn_entities()
+
+        connection = Client(str(uuid1()))
+        self.world.create_entity(
+            connection,
+            AnimatedSpriteComponent(
+                0, 0,
+                [FISH2]
+            ),
+            PlayerComponent()
+        )
+
+        
 
         pyxel.run(self.update, self.draw)
     
@@ -97,6 +158,7 @@ class App:
 
 
     def update(self):
+        return
         if pyxel.btnp(pyxel.KEY_Q):
             pyxel.quit()
 
