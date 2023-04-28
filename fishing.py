@@ -4,9 +4,6 @@ SCREEN_SIZE = 160, 120
 MID = SCREEN_SIZE[0] / 2, SCREEN_SIZE[1] / 2
 
 
-def center_rect(rect, pos):
-    return pos[0] - rect[0] / 2, pos[1] - rect[1] / 2
-
 def rndxy():
     return pyxel.rndi(0, SCREEN_SIZE[0]), pyxel.rndi(0, SCREEN_SIZE[1])
 
@@ -20,11 +17,10 @@ class App:
         self.bg = [rndxy() for _ in range(15)]
         pyxel.run(self.update, self.draw)
 
-
     def update(self):
         if pyxel.btnp(pyxel.KEY_Q):
             pyxel.quit()
-        
+
     def draw(self):
         line_start = MID[0], 0
         line_end = MID
@@ -36,7 +32,6 @@ class App:
         pyxel.line(*line_start, *line_end, 9)
         pyxel.blt(MID[0] - 7, MID[1], *hook)
 
-    
     def draw_bg(self):
         pyxel.cls(1)
         sprite_change_frame = 18
@@ -55,9 +50,8 @@ class App:
                     new_fish = SCREEN_SIZE[0], new_fish[1]
 
                 new_bg[i] = new_fish
-            
+
         self.bg = new_bg
-        
 
 
 App()
