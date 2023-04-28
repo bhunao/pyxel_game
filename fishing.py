@@ -12,7 +12,7 @@ class App:
     def __init__(self) -> None:
         pyxel.init(*SCREEN_SIZE)
         pyxel.load("assets/fishing.pyxres")
-        # pyxel.playm(0, loop=False)
+        pyxel.playm(0, loop=True)
         self.bg_pos = 100, 0
         self.bg = [rndxy() for _ in range(15)]
         pyxel.run(self.update, self.draw)
