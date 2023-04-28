@@ -1,6 +1,4 @@
 import pyxel
-import requests
-
 
 SCREEN_SIZE = 160, 120
 MID = SCREEN_SIZE[0] / 2, SCREEN_SIZE[1] / 2
