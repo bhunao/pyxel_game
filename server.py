@@ -61,12 +61,13 @@ while True:
             user = clients[notified_socket]
             print(f"Received message from {user['data'].decode('utf-8')}: {message['data'].decode('utf-8')}")
 
-            print(*clients_pos.items(), sep='\n')
             clients_pos[notified_socket] = message['data'].decode('utf-8')
 
             for client_socket in clients:
                 if client_socket is not notified_socket: #? is not <=> !=
                     client_socket.send(user['header'] + user['data'] + message['header'] + message['data'])
+                    print(f"sending message {message['data'].decode('utf-8')} to {clients_pos[notified_socket]} to user: {clients[notified_socket]['data'].decode('utf-8')}")
+                    client_socket.send(message['header'] + message['data'])
     
     for notified_socket in execption_sockets:
         sockets_list.remove(notified_socket)

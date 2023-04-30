@@ -52,12 +52,14 @@ class Client:
             while True:
                 username, message = self.receive()
                 print(f"{username} > {message}")
+                return username, message
         except IOError as e:
-            if e.errno != errno.EAGAIN and e.errno  != errno.EWOULDBLOCK:
+            if e.errno != errno.EAGAIN and e.errno != errno.EWOULDBLOCK:
                 print('Reading error', str(e))
                 sys.exit()
-        except:
-            pass
+        except Exception as e:
+            print('General error', str(e))
+            sys.exit()
 
 if __name__ == "__main__":
     client = Client("text")
